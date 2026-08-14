@@ -1,0 +1,497 @@
+/* ---- TikZ Editor modal ---- */
+
+.te-modal {
+  width: 92vw;
+  max-width: 1500px;
+  height: 94vh;
+  max-height: 94vh;
+  padding: 0;
+  overflow: hidden;
+}
+
+.te-modal .modal-content {
+  height: 100%;
+  max-height: 100%;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.te-modal .modal-close-button {
+  z-index: 200;
+}
+
+.te-root {
+  --te-accent: var(--interactive-accent, #7c8cff);
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* CodeMirror scrollbar / focus styling inside the plugin */
+.te-code-editor .cm-editor {
+  outline: none;
+}
+.te-code-editor .cm-editor.cm-focused {
+  outline: 1px solid var(--interactive-accent);
+}
+
+/* ---- tikzcd (cd) mode: ported from yishn/tikzcd-editor (MIT) ---- */
+
+.te-cd {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.te-cd * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -ms-user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.te-cd textarea {
+  -ms-user-select: text;
+  -moz-user-select: text;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.te-cd button {
+  padding: .3rem 1rem;
+  background: #ccc;
+  border: 0;
+  transition: background-color .2s;
+}
+.te-cd button:hover, .te-cd button:focus {
+  background: #bbb;
+  transition: none;
+  outline: none;
+}
+.te-cd button:active {
+  background: #aaa;
+}
+.te-cd a, .te-cd img {
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+.te-cd .hide {
+  opacity: 0;
+  pointer-events: none;
+}
+.te-cd #grid {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.te-cd #grid ol {
+  display: grid;
+  position: relative;
+  list-style: none;
+}
+.te-cd #grid.arrow ol {
+  cursor: crosshair;
+}
+.te-cd #grid.pan ol {
+  cursor: -webkit-grab;
+}
+.te-cd #grid.pan:active ol {
+  cursor: -webkit-grabbing;
+}
+.te-cd #grid ul {
+  position: absolute;
+  list-style: none;
+  left: 0;
+  top: 0;
+  height: 0;
+  width: 0;
+}
+.te-cd .grid-cell {
+  position: relative;
+  display: grid;
+  border: 2px dashed #ccc;
+  border-top: none;
+  border-left: none;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: background-color .2s, box-shadow .2s, transform .2s;
+}
+.te-cd .grid-cell.moving {
+  background: white;
+  box-shadow: 0 5px 1rem rgba(0, 0, 0, .3);
+  transform: scale(1.1);
+}
+.te-cd .grid-cell.selected {
+  background: #eee;
+  outline: none;
+}
+.te-cd .grid-cell .grabber {
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 12px;
+  height: 12px;
+  cursor: move;
+  opacity: 0;
+  pointer-events: none;
+}
+.te-cd .grid-cell .loop {
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  width: 26px;
+  height: 26px;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+}
+.te-cd .pan .grid-cell:hover .grabber, .te-cd .arrow .grid-cell:hover .loop {
+  opacity: 1;
+  pointer-events: all;
+}
+.te-cd .grid-cell .value {
+  margin: auto;
+}
+.te-cd .grid-cell.edit .value {
+  opacity: 0;
+  pointer-events: none;
+}
+.te-cd .grid-cell .edit {
+  display: flex;
+  align-items: center;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+.te-cd .grid-cell .edit input {
+  border: none;
+  outline: none;
+  width: 100%;
+  text-align: center;
+  background: transparent;
+  font: 1rem/1.5 Consolas, monospace;
+}
+.te-cd .grid-arrow {
+  position: absolute;
+  pointer-events: none;
+}
+.te-cd .grid-arrow svg {
+  display: block;
+}
+.te-cd .grid-arrow svg .mouse {
+  transition: stroke .1s;
+}
+.te-cd .arrow .grid-arrow:not(.phantom) svg .mouse {
+  pointer-events: all;
+}
+.te-cd .arrow .grid-arrow svg .mouse:hover {
+  stroke: rgba(204, 204, 204, .6);
+}
+.te-cd .grid-arrow.selected svg .mouse.mouse {
+  stroke: rgb(204, 204, 204);
+}
+.te-cd .grid-arrow .value {
+  position: absolute;
+  white-space: nowrap;
+}
+.te-cd .grid-arrow .value.inside {
+  padding: 0 5px;
+  background: white;
+}
+.te-cd .toolbox {
+  position: absolute;
+  left: 50%;
+  padding: 0 .5em;
+  background: rgba(221, 221, 221, .7);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, .5);
+  transform: translateX(-50%);
+}
+.te-cd .toolbox ul {
+  line-height: 0;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  list-style: none;
+}
+.te-cd .toolbox li.separator {
+  margin: 0 .5em;
+  width: 2px;
+  background: #aaa;
+  text-indent: -9999em;
+}
+.te-cd .toolbox li.button a {
+  cursor: default;
+  transition: background-color .2s;
+}
+.te-cd .toolbox li.button a:hover, .te-cd .toolbox li.button a:focus {
+  background: #ccc;
+  transition: none;
+}
+.te-cd .toolbox li.button a:active {
+  background: #aaa;
+}
+.te-cd .toolbox li.button.checked a {
+  background: #bbb;
+}
+.te-cd .toolbox li.button.disabled a {
+  opacity: .4;
+  pointer-events: none;
+}
+.te-cd .toolbox li.button a {
+  display: block;
+  padding: .5em;
+}
+.te-cd .toolbox li.button img {
+  display: block;
+  background-size: 100%;
+  background-position: center;
+  width: 24px;
+  height: 24px;
+  transition: background-image .2s;
+}
+.te-cd #toolbox {
+  bottom: 2em;
+}
+.te-cd #properties {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+.te-cd #properties.edit {
+  pointer-events: all;
+}
+.te-cd #properties .edit {
+  border-radius: 5px;
+  position: absolute;
+  width: 130px;
+  padding: .3em 1em;
+  background: #fff;
+  color: #333;
+  border: 1px solid #999;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
+  opacity: 0;
+  transition: opacity .1s;
+}
+.te-cd #properties.edit .edit {
+  opacity: 1;
+}
+.te-cd #properties .edit input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #333;
+  font: 1rem/1.5 Consolas, monospace;
+  text-align: center;
+  -ms-user-select: text;
+  -moz-user-select: text;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.te-cd #properties .toolbox {
+  top: calc(-16px - 2em);
+  background: rgba(0, 0, 0, .7);
+  transition: top .2s;
+  pointer-events: all;
+}
+.te-cd #properties.show .toolbox {
+  top: 1em;
+}
+.te-cd #properties li.button a:hover, .te-cd #properties li.button a:focus {
+  background: #0050C0;
+}
+.te-cd #properties li.button a:active {
+  background: #0030A0;
+}
+.te-cd #properties li.button.checked a {
+  background: #2272E2;
+}
+.te-cd #properties li.button.remove a:hover, .te-cd #properties li.button.remove a:focus {
+  background: #E81123;
+}
+.te-cd #properties li.button.remove a:active {
+  background: #C60001;
+}
+.te-cd #properties li.button img {
+  width: 16px;
+  height: 16px;
+  filter: invert(100%);
+}
+.te-cd #properties li.separator {
+  background: rgba(255, 255, 255, .4);
+}
+.te-cd #modal-overlay {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0);
+  visibility: hidden;
+  transition: background-color .2s;
+  z-index: 50;
+}
+.te-cd #modal-overlay.show {
+  visibility: visible;
+  background: rgba(255, 255, 255, .5);
+}
+.te-cd #modal-overlay .modal-box {
+  background: rgba(221, 221, 221, .7);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, .5);
+  padding: 1rem;
+  opacity: 0;
+  transform: scale(.9) translateY(5rem);
+  transition: transform .2s, opacity .2s;
+}
+.te-cd #modal-overlay.show .modal-box {
+  opacity: 1;
+  transform: none;
+}
+.te-cd .code-box textarea {
+  display: block;
+  padding: .5rem;
+  border: none;
+  resize: none;
+  width: 62vw;
+  height: 50vh;
+  font: 1rem/1.5 Consolas, monospace;
+  background: #393939;
+  color: white;
+  white-space: pre;
+}
+.te-cd .code-box textarea:focus {
+  outline: 2px solid #4494F4;
+}
+.te-cd .code-box .buttons {
+  display: flex;
+  justify-content: flex-end;
+  list-style: none;
+  margin-top: 1rem;
+}
+.te-cd .code-box .buttons li:not(:first-child) {
+  margin-left: .5rem;
+}
+.te-cd .code-box .buttons li.separator {
+  flex: 1;
+}
+.te-cd .cd-math {
+  display: inline-block;
+}
+.te-cd .cd-math .katex {
+  font-size: 1.1em;
+}
+
+/* ---- cd mode: left stage + right code panel (60/40 split) ---- */
+
+.te-cd #root.te-cd-root {
+  position: relative;
+  display: flex;
+  height: 100%;
+}
+.te-cd-stage {
+  position: relative;
+  flex: 0 0 60%;
+  min-width: 0;
+  overflow: hidden;
+}
+.te-cd-code {
+  position: relative;
+  flex: 1 1 40%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #bbb;
+  background: #f7f7f7;
+}
+.te-cd-code-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .4em .6em;
+  background: #ddd;
+  border-bottom: 1px solid #bbb;
+}
+.te-cd-code-bar .te-cd-code-title {
+  font: 600 13px/1 Consolas, monospace;
+  color: #333;
+}
+.te-cd-code-bar button {
+  padding: .2em .8em;
+  margin-left: .5em;
+  background: #bbb;
+}
+/* code area: a CodeMirror editor (light background + black code with TeX
+   syntax highlighting — single layer, so font/caret alignment is exact) */
+.te-cd-code-edit {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.te-cd-code-editor {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.te-cd-code-editor .cm-editor {
+  height: 100%;
+}
+.te-cd-code-editor .cm-editor.cm-focused {
+  outline: 2px solid #4494F4;
+  outline-offset: -2px;
+}
+.te-cd-code-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding: .4em .6em;
+  background: #ddd;
+  border-top: 1px solid #bbb;
+}
+.te-cd-parse {
+  background: #2272E2;
+  color: white;
+}
+.te-cd-parse:hover {
+  background: #4494F4;
+}
+
+/* keyboard-style badges above toolbox buttons (arrow style keys) */
+
+.te-cd .toolbox li.button {
+  position: relative;
+}
+.te-cd .toolbox li.button .badge {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  font: 700 8px/1 Consolas, monospace;
+  color: #fff;
+  background: rgba(0, 0, 0, .75);
+  border-radius: 3px;
+  padding: 1px 3px;
+  pointer-events: none;
+}

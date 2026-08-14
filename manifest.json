@@ -1,0 +1,9 @@
+{
+  "id": "tikz-editor",
+  "name": "TikZ Editor",
+  "version": "1.0.0",
+  "minAppVersion": "1.4.0",
+  "description": "A visual TikZ editor for Obsidian with Vim-like editing mode, live preview and object manipulation.",
+  "author": "jon_hu",
+  "isDesktopOnly": false
+}
