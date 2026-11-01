@@ -1,0 +1,16 @@
+node_modules/
+*.map
+.DS_Store
+
+# generated test bundles — rebuild with: node test/build-harness.mjs
+test/harness.js
+test/harness.css
+test/engine-probe.js
+test/engine-probe.css
+test/standalone.js
+test/tikzjax-renderer.js
+test/fonts-embedded.css
+
+# vendored TikZJax build output — rebuild with: node tikzjax-src/build.mjs
+tikzjax-src/tikzjax-renderer.js
+tikzjax-src/fonts-embedded.css

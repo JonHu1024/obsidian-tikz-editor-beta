@@ -1,0 +1,14 @@
+import { chromium } from 'playwright-core';
+import { pathToFileURL } from 'url';
+import path from 'path';
+const EXE = path.join(process.env.HOME, '.cache/ms-playwright/chromium-1228/chrome-linux64/chrome');
+const browser = await chromium.launch({ executablePath: EXE, headless: true, args: ['--no-sandbox','--disable-gpu'] });
+const page = await browser.newPage();
+page.on('pageerror', e => console.log('PAGEERROR:', String(e)));
+page.on('console', m => { if (m.type()==='error') console.log('CONSOLE:', m.text()); });
+const url = pathToFileURL(path.resolve('test/index.html')).href;
+await page.goto(url);
+await page.waitForTimeout(1200);
+console.log('has te:', await page.evaluate(() => typeof window.__te));
+console.log('body:', await page.evaluate(() => document.body.innerHTML.slice(0, 400)));
+await browser.close();

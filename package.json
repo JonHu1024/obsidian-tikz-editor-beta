@@ -1,0 +1,53 @@
+{
+  "name": "obsidian-tikz-editor",
+  "version": "1.0.0",
+  "description": "A visual TikZ editor for Obsidian with Vim-like editing mode",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+    "build:harness": "node test/build-harness.mjs",
+    "test": "node test/build-harness.mjs && node test/run-test.mjs",
+    "test:audit": "node test/build-harness.mjs && node test/run-audit.mjs",
+    "test:e2e": "node test/build-harness.mjs && node test/run-e2e-tikzjax.mjs"
+  },
+  "keywords": [
+    "obsidian",
+    "tikz",
+    "editor"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/pako": "^2.0.4",
+    "buffer": "^6.0.3",
+    "classnames": "^2.5.1",
+    "copy-text-to-clipboard": "^3.2.2",
+    "doken": "^1.0.2",
+    "dvi2html": "^1.3.0",
+    "esbuild": "^0.21.5",
+    "esbuild-svelte": "^0.8.2",
+    "events": "^3.3.0",
+    "jsx-tikzcd": "^0.5.1",
+    "lz-string": "^1.5.0",
+    "obsidian": "latest",
+    "pako": "^3.0.1",
+    "playwright-core": "^1.62.1",
+    "preact": "^10.29.8",
+    "process": "^0.11.10",
+    "stream-browserify": "^3.0.0",
+    "svelte": "^4.2.0",
+    "svelte-preprocess": "^5.1.4",
+    "typescript": "^5.4.0",
+    "util": "^0.12.5"
+  },
+  "dependencies": {
+    "@codemirror/commands": "^6.6.0",
+    "@codemirror/language": "^6.10.0",
+    "@codemirror/search": "^6.7.1",
+    "@codemirror/state": "^6.4.0",
+    "@codemirror/view": "^6.26.0",
+    "@lezer/highlight": "^1.2.0",
+    "katex": "^0.18.1"
+  }
+}

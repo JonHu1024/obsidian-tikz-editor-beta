@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>engine probe</title>
+</head>
+<body>
+  <div id="root"></div>
+  <pre id="log"></pre>
+  <script src="./engine-probe.js"></script>
+  <script>
+    window.addEventListener("load", async () => {
+      const log = document.getElementById("log");
+      log.textContent = "load fired; __tz: " + typeof window.__tz + "\n";
+      const out = [];
+      out.push(await window.__tz.download());
+      for (const name of Object.keys(window.__tz.samples)) {
+        log.textContent += "rendering " + name + "...\n";
+        try {
+          const r = await window.__tz.render(name, window.__tz.samples[name]);
+          out.push(r);
+        } catch (e) {
+          out.push(name + ": " + String(e));
+        }
+      }
+      out.push("ptPerCm: " + window.__tz.ptPerCm());
+      log.textContent += out.join("\n");
+    });
+  </script>
+</body>
+</html>
